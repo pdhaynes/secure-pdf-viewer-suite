@@ -26,14 +26,55 @@ This is where this alteration comes in. By modifying the classes to use memory f
 The classes provided in this library need version 21 (Lollipop) or above.
 
 ```kotlin
-        TODO()
+        /**
+         * Example of use case
+         * Sample PDF file AES encrypted using key from Android Keystore.
+         *
+         * File is AES encrypted and stored in app's cache directory
+         * We don't want the PDF file to be written back to the directory unencrypted
+         */
+        val encryptedPdfFile = File(cacheDir, "sample.pdf")
+
+        // Pulls sample file from Assets folder
+        val pdfFileInputStream = baseContext.assets.open("sample.pdf")
+
+        // Directly reads file bytes, does not write to disk
+        val pdfFileBytes = ByteArray(pdfFileInputStream.available())
+        pdfFileInputStream.read(pdfFileBytes)
+        pdfFileInputStream.close()
+
+        // File is encrypted and saved to cache directory.
+        val fileKey = CryptographyHelper.getSecretKeyFromKeystore(encryptedPdfFile.name)
+        val encryptedFileData = CryptographyHelper.encodeFile(pdfFileBytes, fileKey)
+        CryptographyHelper.saveEncodedFile(encryptedPdfFile, encryptedFileData)
+
+        // File is pulled from cache directory and decrypted
+        val secretKey = CryptographyHelper.getSecretKeyFromKeystore(encryptedPdfFile.name)
+        val decryptedFileBytes = CryptographyHelper.decodeFile(encryptedPdfFile, secretKey)
+
+        // Default initialization for activity.xml elements
+        pager = findViewById(R.id.pager)
+        pages = findViewById<TextView>(R.id.pages)
+        animator = findViewById<ViewAnimator>(R.id.animator)
+        (animator as? ViewAnimator)?.visibility = View.VISIBLE
+
+        pager.visibility = View.VISIBLE
+
+        // Decrypted file written to memory
+        memoryFile = MemoryFile("temp_pdf", decryptedFileBytes.size)
+        memoryFile.writeBytes(decryptedFileBytes, 0, 0, decryptedFileBytes.size)
+
+        // Memory file can be passed into adapter which will then pass memory file into decoder
+        // and so on
+        pagerAdapter =
+            MemoryPDFPagerAdapter(
+                this,
+                memoryFile
+            )
+        pager.adapter = pagerAdapter
 ```
 
-For a more complex example see the sample application. There we use a [VerticalViewPager] and a PagerAdapter.
-Within the PagerAdapter we use the subsampling-scale-image-view and this's decoder classes.
-
-
-Download
+Download TODO
 -------
 ```groovy
 repositories {
